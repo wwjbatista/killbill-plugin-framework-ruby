@@ -29,51 +29,45 @@ module Killbill
   module Plugin
     module Model
 
-      java_package 'org.killbill.billing.entitlement.api'
-      class EntitlementSpecifier
+      java_package 'org.killbill.billing.invoice.plugin.api'
+      class PriorInvoiceResult
 
-        include org.killbill.billing.entitlement.api.EntitlementSpecifier
+        include org.killbill.billing.invoice.plugin.api.PriorInvoiceResult
 
-        attr_accessor :plan_phase_specifier, :bill_cycle_day, :overrides
+        attr_accessor :is_aborted, :reschedule_date
 
         def initialize()
         end
 
         def to_java()
-          # conversion for plan_phase_specifier [type = org.killbill.billing.catalog.api.PlanPhaseSpecifier]
-          @plan_phase_specifier = @plan_phase_specifier.to_java unless @plan_phase_specifier.nil?
+          # conversion for is_aborted [type = boolean]
+          @is_aborted = @is_aborted.nil? ? java.lang.Boolean.new(false) : java.lang.Boolean.new(@is_aborted)
 
-          # conversion for bill_cycle_day [type = java.lang.Integer]
-          @bill_cycle_day = @bill_cycle_day
-
-          # conversion for overrides [type = java.util.List]
-          tmp = java.util.ArrayList.new
-          (@overrides || []).each do |m|
-            # conversion for m [type = org.killbill.billing.catalog.api.PlanPhasePriceOverride]
-            m = m.to_java unless m.nil?
-            tmp.add(m)
+          # conversion for reschedule_date [type = org.joda.time.DateTime]
+          if !@reschedule_date.nil?
+            @reschedule_date =  (@reschedule_date.kind_of? Time) ? DateTime.parse(@reschedule_date.to_s) : @reschedule_date
+            @reschedule_date = Java::org.joda.time.DateTime.new(@reschedule_date.to_s, Java::org.joda.time.DateTimeZone::UTC)
           end
-          @overrides = tmp
           self
         end
 
         def to_ruby(j_obj)
-          # conversion for plan_phase_specifier [type = org.killbill.billing.catalog.api.PlanPhaseSpecifier]
-          @plan_phase_specifier = j_obj.plan_phase_specifier
-          @plan_phase_specifier = Killbill::Plugin::Model::PlanPhaseSpecifier.new.to_ruby(@plan_phase_specifier) unless @plan_phase_specifier.nil?
-
-          # conversion for bill_cycle_day [type = java.lang.Integer]
-          @bill_cycle_day = j_obj.bill_cycle_day
-
-          # conversion for overrides [type = java.util.List]
-          @overrides = j_obj.overrides
-          tmp = []
-          (@overrides || []).each do |m|
-            # conversion for m [type = org.killbill.billing.catalog.api.PlanPhasePriceOverride]
-            m = Killbill::Plugin::Model::PlanPhasePriceOverride.new.to_ruby(m) unless m.nil?
-            tmp << m
+          # conversion for is_aborted [type = boolean]
+          @is_aborted = j_obj.is_aborted
+          if @is_aborted.nil?
+            @is_aborted = false
+          else
+            tmp_bool = (@is_aborted.java_kind_of? java.lang.Boolean) ? @is_aborted.boolean_value : @is_aborted
+            @is_aborted = tmp_bool ? true : false
           end
-          @overrides = tmp
+
+          # conversion for reschedule_date [type = org.joda.time.DateTime]
+          @reschedule_date = j_obj.reschedule_date
+          if !@reschedule_date.nil?
+            fmt = Java::org.joda.time.format.ISODateTimeFormat.date_time_no_millis # See https://github.com/killbill/killbill-java-parser/issues/3
+            str = fmt.print(@reschedule_date)
+            @reschedule_date = DateTime.iso8601(str)
+          end
           self
         end
 
